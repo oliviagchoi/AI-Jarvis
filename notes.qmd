@@ -1,0 +1,405 @@
+---
+title: Jarvis Assistant Design Details
+format:
+  html:
+    theme: flatly
+    
+---
+
+
+## Project Overview
+
+Jarvis is an emotion-aware voice assistant demo built around a browser conversation
+console and a FastAPI backend. The system accepts text or recorded speech, detects
+the user's emotional state, retrieves persona-specific response guidance, sends a
+context-rich prompt to an LLM, stores the turn in session memory, and returns both a
+text reply and a generated speech artifact when TTS is available.
+
+The project is designed as a working prototype for emotionally adaptive assistant
+behavior rather than a generic chatbot. The core design idea is that Jarvis should
+not only answer the user's words; it should adjust tone, pacing, and practical next
+steps based on detected emotion, recent conversation history, persona preference,
+and optional wellness signals.
+
+## Tech Stack
+
+| Layer | Technology | Use In This Project |
+| --- | --- | --- |
+| Language | Python 3.11 / 3.12 | Backend application, services, scripts, and tests |
+| Web framework | FastAPI | REST API, websocket endpoint, app lifecycle, and static UI route |
+| ASGI server | Uvicorn | Local development server for the FastAPI app |
+| Data validation | Pydantic, pydantic-settings | Request/response schemas and environment-backed configuration |
+| Database ORM | SQLAlchemy async | Conversation memory persistence |
+| Primary database | MySQL with `aiomysql` | Main configured database target |
+| Fallback database | SQLite with `aiosqlite` | Local fallback when MySQL is unavailable |
+| Frontend | HTML, CSS, vanilla JavaScript | Browser conversation console at `/ui` |
+| Browser audio | MediaRecorder API, Web Audio API | Microphone recording, audio preview, and UI cue tones |
+| Wake phrase | Web Speech API | Browser-side wake phrase listening where supported |
+| LLM providers | AWS Bedrock, Groq, local deterministic mode | Assistant response generation |
+| Speech-to-text | OpenAI Whisper package | Legacy voice transcription |
+| Audio emotion | Hugging Face Transformers | Wav2Vec2-based emotion classification when dependencies are available |
+| Voice understanding | SenseVoice / FunASR / ModelScope | Optional combined transcript, emotion, language, and audio event path |
+| Text-to-speech | Coqui TTS | Assistant speech synthesis when installed |
+| Prompt assets | Plain text prompt templates | Runtime prompt assembly for Jarvis responses |
+| Persona guidance | JSON cache files | Precomputed persona and emotion response guidance |
+| Demo assets | JSON scenarios and generated WAV files | Repeatable presentation and smoke-test flows |
+
+## Product Experience
+
+The main user experience is the browser UI at `/ui`, implemented with plain HTML,
+CSS, and JavaScript in `app/static/`.
+
+The intended product flow is persona-first. The user selects the assistant persona or
+support style at the start of the session, before recording or sending a message.
+That selected `persona_id` is then included with each text or voice turn so Jarvis can
+combine the user's detected emotion with the chosen persona and reply accordingly.
+
+Primary user workflows:
+
+- Select the persona/profile for the conversation at the start of the product flow.
+- Start a text conversation with `/api/chat`.
+- Record a browser microphone clip after persona selection and send it to `/api/voice`.
+- Use an optional transcript override to bypass Whisper during demos.
+- Simulate wellness signals with heart rate and stress level controls.
+- Listen for the wake phrase `Hey JayJay` or `Hey Jay Jay`.
+- Play back the latest assistant audio response when a `.wav` is generated.
+- Review the conversation thread stored for the active session.
+- Inspect transcript, assistant response, emotion details, output artifact, and raw
+  JSON diagnostics.
+- Clear the current session with the new conversation action.
+
+The UI is intentionally diagnostic. It presents both the polished conversation
+surface and the underlying metadata so the emotional pipeline can be explained
+during demos.
+
+## Visual Design
+
+The frontend uses a dark, futuristic console style to support the Jarvis theme:
+
+- Typeface pairing:
+  - `Space Grotesk` for readable interface text.
+  - `Orbitron` for machine-like labels and mood headings.
+- Layout:
+  - A centered `shell` with a hero area followed by functional panels.
+  - Responsive grids for controls, media, diagnostics, and history.
+  - Conversation history uses role-based cards aligned left/right for assistant/user
+    turns.
+- Components:
+  - Emotion monitor with mood title, summary, glowing core, animated rings, and
+    waveform bars.
+  - Controls panel for session, transcript override, wellness simulation, text input,
+    and conversation actions.
+  - Media panel for recorded clip preview and assistant output playback.
+  - Diagnostics panel for transcript, reply, emotion debug payload, artifact path,
+    and raw response JSON.
+
+Emotion themes are implemented with CSS variables on `body[data-emotion]`:
+
+| Emotion | Visual Treatment |
+| --- | --- |
+| `neutral` / `calm` | Cool blue baseline, slower waveform, lower pulse height |
+| `happy` / `excited` / `surprised` | Brighter green/yellow energy, faster waveform |
+| `sad` | Softer blue palette, slower pulse, lower waveform |
+| `fear` | Warm orange alert state, faster waveform, higher pulse |
+| `angry` | Red high-alert state, fastest waveform, strongest pulse |
+
+The visual state is not decorative only. It is meant to make emotion detection
+visible to the user and useful during demos.
+
+## System Architecture
+
+High-level request flow:
+
+```text
+Persona selected at session start
+  -> browser text or microphone input
+  -> FastAPI route
+  -> optional speech-to-text
+  -> emotion detection
+  -> session memory lookup
+  -> persona guidance lookup
+  -> prompt context assembly
+  -> LLM response generation
+  -> TTS or text artifact output
+  -> memory persistence
+  -> browser UI update
+```
+
+## System Flowchart
+
+```{mermaid}
+flowchart TD
+    A[User opens /ui browser console] --> A1[Select persona / support style]
+    A1 --> B{Interaction type}
+
+    B -->|Text message| C[POST /api/chat with persona_id]
+    B -->|Voice turn| D[Record microphone audio]
+    D --> E[POST /api/voice with persona_id + audio]
+    E --> F[Save uploaded audio]
+
+    F --> G{Voice understanding mode}
+    G -->|legacy| H[Whisper transcription]
+    H --> I[Hybrid emotion detection]
+    I --> I1[Audio classifier]
+    I --> I2[Transcript keyword scoring]
+    I1 --> J[Choose final emotion]
+    I2 --> J
+
+    G -->|SenseVoice optional| K[SenseVoice transcript + emotion metadata]
+    K --> J
+
+    C --> L[Resolve selected persona]
+    J --> L
+    L --> M[Load recent session history]
+    M --> N[Load persona + emotion guidance cache]
+    N --> O[Build prompt context payload]
+    O --> P{LLM provider}
+    P -->|Bedrock| Q[Generate assistant reply]
+    P -->|Groq| Q
+    P -->|Local deterministic| Q
+
+    Q --> R[Generate TTS or text artifact]
+    R --> S[Persist user + assistant turns]
+    S --> T[Return ChatResponse JSON]
+    T --> U[Update transcript, reply, mood, history, diagnostics, and audio playback]
+```
+
+Major modules:
+
+| Area | Files | Responsibility |
+| --- | --- | --- |
+| App entry | `main.py`, `app/api.py` | FastAPI app creation, routes, startup/shutdown, static file mounting |
+| Config | `app/config.py` | Environment-backed settings for providers, models, storage, and audio paths |
+| Orchestration | `app/services/orchestrator.py` | Coordinates chat and voice pipelines |
+| LLM | `app/services/llm.py` | Builds prompts and calls Bedrock, Groq, or local deterministic mode |
+| Emotion | `app/services/emotion.py` | Text, audio, and hybrid emotion detection |
+| STT | `app/services/stt.py` | Whisper transcription path |
+| SenseVoice | `app/services/sensevoice.py` | Optional unified voice understanding path |
+| TTS | `app/services/tts.py` | Coqui TTS synthesis with text artifact fallback |
+| Memory | `app/services/memory.py` | Stores and retrieves recent session turns |
+| Persona guidance | `app/services/rag.py` | Loads persona metadata and cached emotion guidance |
+| Data models | `app/models.py`, `app/schemas.py` | SQLAlchemy table and Pydantic API contracts |
+| Frontend | `app/static/index.html`, `app/static/app.js`, `app/static/styles.css` | Browser conversation console |
+
+## Backend Design
+
+The backend is centered on `AssistantOrchestrator`. Routes stay thin and delegate
+work to the orchestration layer.
+
+The selected persona is part of the request contract. The frontend should capture the
+persona at the beginning of the session and send that `persona_id` with both text and
+voice requests. The backend then combines the selected persona with detected emotion
+to pick the correct guidance before the LLM reply is generated.
+
+Text chat path:
+
+1. `POST /api/chat` receives `ChatRequest`, including the selected `persona_id`.
+2. The orchestrator resolves the selected persona metadata.
+3. If no emotion was supplied, text keyword emotion detection runs.
+4. Recent turns for the session are loaded from memory.
+5. `LLMService` builds a prompt with emotion, persona, history, and wellness context.
+6. The selected LLM provider generates a reply.
+7. `TextToSpeechService` attempts speech synthesis or writes a text fallback.
+8. User and assistant turns are stored in the database.
+9. `ChatResponse` is returned to the UI.
+
+Voice path:
+
+1. The user selects a persona first, then records the voice turn.
+2. `POST /api/voice` accepts multipart audio plus session, selected persona, and demo
+   fields.
+3. The uploaded file is saved under the configured uploads directory.
+4. If SenseVoice is enabled, it can produce transcript and emotion metadata together.
+5. In legacy mode, Whisper transcribes audio and `EmotionService` combines audio and
+   transcript-based emotion signals.
+6. The resulting transcript, selected persona, and emotion are passed into the normal
+   chat path.
+7. The response includes the transcript, detected emotion, debug payload, audio path,
+   and optional wellness signal.
+
+## API Design
+
+Current API surface:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /` | Basic app status message |
+| `GET /ui` | Browser console |
+| `GET /health` | Provider status for LLM, STT, emotion, TTS, and database |
+| `POST /api/chat` | Text turn |
+| `POST /api/voice` | Voice upload turn |
+| `GET /api/personas` | Available persona profiles |
+| `GET /api/history/{session_id}` | Recent turns for a session |
+| `DELETE /api/history/{session_id}` | Clear one session |
+| `WS /ws/chat` | Minimal websocket path using neutral emotion and no memory |
+
+The API response shape is designed for both user experience and debugging. A normal
+chat response includes the user message, assistant message, detected emotion, optional
+transcript, optional emotion debug payload, output artifact path, persona id, and
+wellness signal.
+
+## Data And Memory Design
+
+Conversation memory is stored in the `conversation_turns` table:
+
+| Field | Purpose |
+| --- | --- |
+| `id` | Primary key |
+| `session_id` | Browser/demo session partition |
+| `role` | `user` or `assistant` |
+| `content` | Turn text |
+| `emotion` | Emotion associated with the turn |
+| `created_at` | Server timestamp |
+
+The memory service retrieves the most recent turns for a session in chronological
+order after querying newest-first. The current UI and prompt flow use up to 12 turns.
+
+Database behavior:
+
+- MySQL is the primary configured database.
+- SQLite is used as a fallback when MySQL is unavailable and fallback is enabled.
+- On app startup, all conversation history is currently cleared for demo cleanliness.
+
+## Emotion Design
+
+Emotion is used in three places:
+
+- Backend response generation through prompt context and guidance.
+- Frontend visual state through `body[data-emotion]`.
+- Diagnostics through `emotion_debug` metadata.
+
+Supported or planned emotion labels:
+
+- `neutral`
+- `calm`
+- `happy`
+- `excited`
+- `surprised`
+- `sad`
+- `fear`
+- `angry`
+- `disgust`
+
+Text emotion detection uses keyword groups for positive, sad, angry, and fear/stress
+signals. Legacy voice mode combines audio model output with transcript keyword
+signals. The hybrid design favors transcript emotion when the audio result is weak,
+neutral/calm with a strong text cue, or clearly lower confidence than the text cue.
+
+## Persona Guidance Design
+
+Jarvis uses persona-aware guidance so different user profiles can receive different
+response styles for the same emotion.
+
+The product selection order is:
+
+1. Choose the persona/profile at the start of the session.
+2. Record or type the user turn.
+3. Detect the user's emotion from text/audio signals.
+4. Retrieve guidance using `selected persona + detected emotion`.
+5. Generate a reply that matches both the persona preference and the user's current
+   emotional state.
+
+Current persona metadata lives in `corpus/personas.json`:
+
+| Persona | Design Role |
+| --- | --- |
+| `tony_stark` | Direct, autonomy-respecting, low-emotion fixer |
+| `maya_chen` | Soft, validating reassurance seeker |
+| `uncle_ray` | Grounded, practical realist |
+| `sam_rivera` | Warm reframer with emotional nuance |
+| `priya_shah` | Stressed MSBA student needing pressure relief and tactics |
+| `default_danny` | Warm, clear, grounded default |
+
+Runtime guidance is loaded from `corpus/persona_guidance.json` by
+`persona_id + detected_emotion`. This behaves like a precomputed RAG cache: the
+assistant gets targeted style guidance without performing vector search or extra LLM
+calls during the user turn.
+
+## Prompt Design
+
+The main prompt template is `prompts/jarvis_chat.txt`.
+
+The prompt receives a JSON context payload containing:
+
+- `user_text`
+- `emotion`
+- `detected_emotion`
+- `emotion_guidance`
+- `user_profile`
+- `conversation_history`
+- `wellness_signal`
+
+Prompt rules emphasize:
+
+- Answer directly in Jarvis' voice.
+- Use context only when relevant.
+- Adapt tone based on detected emotion, guidance, and user profile.
+- Keep responses simple, practical, concise, and easy to say out loud.
+- Support distress without diagnosing medical or mental health conditions.
+- Avoid inventing personal facts not present in context.
+
+## Model And Provider Design
+
+The backend supports multiple provider modes:
+
+| Layer | Current Design |
+| --- | --- |
+| LLM | Bedrock by default, Groq as alternate, local deterministic mode for offline tests |
+| STT | Whisper in legacy voice mode |
+| Audio emotion | Hugging Face wav2vec2 emotion classifier when dependencies are available |
+| Unified voice understanding | Optional SenseVoice path |
+| TTS | Coqui TTS when installed, text artifact fallback otherwise |
+| Database | MySQL primary, SQLite fallback |
+
+The `local` LLM provider is intentionally deterministic so smoke tests can verify the
+pipeline without external credentials or network dependencies.
+
+## Demo Design
+
+The demo experience is designed to be repeatable and explainable:
+
+- `demo/scenarios.json` provides scripted cases.
+- `demo/audio/` contains generated WAV clips for voice endpoint tests.
+- The UI includes transcript override for quick demos when local STT is unavailable.
+- Wellness controls simulate future wearable input without requiring hardware.
+- Diagnostics expose the exact JSON returned by the backend.
+- Playback speed defaults to `1.25x` for faster presentation pacing.
+
+## Safety And Reliability Design
+
+Important safeguards and reliability choices:
+
+- Provider health is exposed through `/health`.
+- Placeholder API keys are treated as missing config.
+- Empty string config values are normalized to `None`.
+- LLM provider failures return structured errors.
+- TTS gracefully falls back to a text artifact when audio synthesis is unavailable.
+- Database initialization falls back to SQLite when configured.
+- The assistant prompt explicitly avoids diagnosis and unsupported personal memory.
+- The app clears stored history on startup to keep demos predictable.
+
+## Current Limitations
+
+- The wake phrase depends on browser Web Speech API support.
+- The websocket endpoint is minimal and does not use full memory/emotion orchestration.
+- Real-time streaming voice is configured as a future possibility but not wired into
+  the current FastAPI flow.
+- `disgust` is recognized as a planned/supported label in design docs, but the current
+  UI falls back to neutral styling unless a dedicated theme is added.
+- Persona guidance is cache-based rather than a live vector retrieval system.
+- Conversation history is not durable across app restarts because startup clears it.
+
+## Future Design Direction
+
+Likely next design steps:
+
+- Make the persona selector the first visible control in the browser UI and keep the
+  selected persona visible during recording.
+- Add a dedicated `disgust` visual theme and guidance checks.
+- Make durable memory optional through a config flag.
+- Promote the emotion/persona guidance cache into a true retrieval pipeline if the
+  guidance set grows beyond the current matrix.
+- Add richer emotion metrics such as valence, arousal, dominance, uncertainty, and
+  mixed-emotion scores.
+- Expand realtime voice support using the existing realtime model setting.
+- Add automated frontend checks for the main conversation flows.
