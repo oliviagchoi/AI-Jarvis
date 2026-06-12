@@ -1,0 +1,586 @@
+---
+title: "Emotion-Personality RAG Flowchart"
+format: html
+---
+
+This document defines the next workflow for Jarvis: use a RAG system with
+personality-specific documentation for every emotion, then use sentiment and emotion
+analysis to produce a quantified, structured prompt context for the LLM.
+
+## Core Plan
+
+Jarvis should not use only one generic emotion prompt. Instead, it should retrieve
+context from a documentation matrix:
+
+```text
+emotion x personality type = prompt guidance
+```
+
+Example:
+
+- Emotion: `fear`
+- Personality type: `caretaker`
+- Retrieved context: gentle, grounding, low-energy support
+
+Another example:
+
+- Emotion: `fear`
+- Personality type: `coach`
+- Retrieved context: calm but action-oriented next step
+
+The LLM gets this retrieved context before answering, so it can respond with the
+right emotional tone and personality style.
+
+## Five Personality Types (Maybe/IDK)
+
+Use five primary personality types for the documentation matrix:
+
+| Personality Type | Purpose | Response Style |
+| --- | --- | --- |
+| `peer` | Friendly everyday support | Natural, warm, equal, conversational |
+| `caretaker` | Emotional reassurance | Gentle, protective, patient, grounding |
+| `coach` | Goals and action | Direct, motivating, structured, practical |
+| `teacher` | Learning and explanation | Clear, patient, step-by-step, example-based |
+| `professional` | Work and formal tasks | Polished, concise, composed, decision-focused |
+
+These five types should exist for every supported emotion.
+
+## Supported Emotions
+
+Start with the emotions already used or planned in the Jarvis project:
+
+| Emotion | Meaning |
+| --- | --- |
+| `neutral` | No strong emotion detected |
+| `calm` | Relaxed, settled, low pressure |
+| `happy` | Positive, pleased, satisfied |
+| `excited` | High positive energy, momentum |
+| `surprised` | Unexpected information or reaction |
+| `sad` | Low mood, disappointment, hurt |
+| `fear` | Anxiety, worry, stress, overwhelm |
+| `angry` | Frustration, irritation, conflict |
+| `disgust` | Discomfort, rejection, aversion |
+
+With 9 emotions and 5 personality types, the first documentation set should contain:
+
+```text
+9 emotions x 5 personality types = 45 guidance documents
+```
+
+## Documentation Matrix
+
+Future source docs can use this structure:
+
+```text
+app/knowledge/
+  emotion_personas/
+    neutral/
+      peer.qmd
+      caretaker.qmd
+      coach.qmd
+      teacher.qmd
+      professional.qmd
+    calm/
+      peer.qmd
+      caretaker.qmd
+      coach.qmd
+      teacher.qmd
+      professional.qmd
+    fear/
+      peer.qmd
+      caretaker.qmd
+      coach.qmd
+      teacher.qmd
+      professional.qmd
+```
+
+The same pattern should continue for every emotion.
+
+## Individual Doc Template
+
+Each emotion-personality document should follow the same template:
+
+```markdown
+# Emotion: Fear
+# Personality: Caretaker
+
+## When To Use
+Use when the user appears anxious, overwhelmed, worried, or unsafe-feeling and the
+assistant should respond gently.
+
+## Signals
+- Transcript: worried, anxious, panic, overwhelmed, tense, stressed
+- Audio: shaky voice, fast pace, long pauses, tense tone
+- Wellness: high stress level, elevated heart rate
+
+## Response Style
+- Validate the feeling briefly.
+- Lower the energy.
+- Use simple, grounded language.
+- Offer one or two stabilizing next steps.
+
+## Avoid
+- Do not diagnose.
+- Do not intensify urgency.
+- Do not overload the user with a long plan.
+
+## Prompt Guidance
+Respond like a steady caretaker: gentle, short, reassuring, and practical.
+
+## Example
+User: "I am overwhelmed and I do not know what to do."
+Jarvis: "Take one slow breath first. You only need the next small step: write down the closest deadline, then give it 10 quiet minutes."
+```
+
+## Documentation Build Flow
+
+```{mermaid}
+flowchart TD
+    A[Define supported emotions] --> B[Define 5 personality types]
+    B --> C[Create emotion-personality matrix]
+    C --> D[Write 45 QMD guidance docs]
+    D --> E[Chunk docs by section]
+    E --> F[Attach metadata]
+    F --> G[Create embeddings]
+    G --> H[Store chunks in vector database]
+
+    F --> F1[emotion]
+    F --> F2[personality_type]
+    F --> F3[section]
+    F --> F4[priority]
+    F --> F5[safety_level]
+```
+
+## Runtime RAG Flow
+
+```{mermaid}
+flowchart TD
+    A[User text or voice] --> B{Input type}
+    B -->|Voice| C[Speech-to-text transcript]
+    B -->|Text| D[Use message text]
+    C --> E[Normalize transcript]
+    D --> E
+
+    E --> F[Extract emotion and sentiment signals]
+    F --> F1[Text sentiment]
+    F --> F2[Keyword emotion scores]
+    F --> F3[LLM or classifier emotion scores]
+    F --> F4[Audio emotion scores if voice]
+    F --> F5[Wellness signal if provided]
+    F --> F6[Conversation history]
+
+    F1 --> G[Quantify emotion state]
+    F2 --> G
+    F3 --> G
+    F4 --> G
+    F5 --> G
+    F6 --> G
+
+    G --> H[Select top emotions and uncertainty]
+    H --> I[Select personality type]
+    I --> J[Build RAG query]
+    J --> K[Retrieve emotion-personality docs]
+    K --> L[Build LLM prompt context]
+    L --> M[LLM generates structured response]
+    M --> N[Validate output]
+    N --> O[UI mood, confidence, persona, reply, and TTS]
+```
+
+## RAG Query Shape
+
+The retrieval query should combine the user's words, measured signals, and selected
+personality type.
+
+```text
+Transcript:
+{{TRANSCRIPT}}
+
+Emotion scores:
+{{EMOTION_DISTRIBUTION}}
+
+Sentiment metrics:
+- polarity: {{SENTIMENT_POLARITY}}
+- intensity: {{SENTIMENT_INTENSITY}}
+- valence: {{VALENCE}}
+- arousal: {{AROUSAL}}
+- dominance: {{DOMINANCE}}
+
+Context:
+- previous turn summary: {{RECENT_HISTORY_SUMMARY}}
+- wellness: {{WELLNESS_SIGNAL}}
+
+Personality type:
+{{PERSONALITY_TYPE}}
+
+Retrieve the best emotion-personality guidance for the assistant response.
+```
+
+## How To Quantify Everything
+
+The system should produce numeric values before the LLM answers. These values make
+the emotional state explainable and easier to debug.
+
+### Main Metrics
+
+| Metric | Range | Meaning |
+| --- | --- | --- |
+| `sentiment_polarity` | `-1.0` to `1.0` | Negative to positive sentiment |
+| `sentiment_intensity` | `0.0` to `1.0` | Strength of emotional language |
+| `valence` | `0` to `100` | Pleasantness or positivity |
+| `arousal` | `0` to `100` | Emotional energy or activation |
+| `dominance` | `0` to `100` | User's sense of control or agency |
+| `emotion_confidence` | `0` to `100` per emotion | Probability-like score for each emotion |
+| `uncertainty` | `0` to `100` | How unsure the system is |
+| `mixed_emotion_score` | `0` to `100` | Whether multiple emotions are active |
+| `personality_fit` | `0` to `100` | How well the selected personality matches the turn |
+| `retrieval_relevance` | `0` to `100` per chunk | How relevant each RAG doc is |
+
+### Valence, Arousal, Dominance
+
+Use a VAD model to represent emotion more deeply than positive/negative sentiment:
+
+- `valence`: how pleasant or unpleasant the state is
+- `arousal`: how activated or intense the state is
+- `dominance`: how much control the user seems to feel
+
+Examples:
+
+| Emotion | Valence | Arousal | Dominance |
+| --- | --- | --- | --- |
+| `calm` | 70 | 20 | 70 |
+| `happy` | 85 | 55 | 75 |
+| `excited` | 85 | 85 | 70 |
+| `sad` | 20 | 35 | 30 |
+| `fear` | 20 | 80 | 20 |
+| `angry` | 25 | 85 | 60 |
+
+These are not final truth values. They are useful defaults that can be adjusted by
+text, audio, wellness, and conversation context.
+
+### Emotion Distribution
+
+Always calculate a full distribution across supported emotions:
+
+```json
+{
+  "neutral": 6,
+  "calm": 4,
+  "happy": 0,
+  "excited": 1,
+  "surprised": 2,
+  "sad": 14,
+  "fear": 68,
+  "angry": 3,
+  "disgust": 2
+}
+```
+
+Rules:
+
+- Values must be integers from `0` to `100`.
+- Values must add up to `100`.
+- The top emotion becomes `top_emotion`.
+- If the top two emotions are close, mark the result as mixed.
+- If all scores are low or flat, increase uncertainty.
+
+### Mixed Emotion Detection
+
+Use mixed emotion when the second-highest emotion is close to the top emotion.
+
+```text
+if second_score >= top_score - 15:
+    mixed_emotion = true
+else:
+    mixed_emotion = false
+```
+
+Example:
+
+```json
+{
+  "top_emotion": "fear",
+  "secondary_emotion": "sad",
+  "top_score": 48,
+  "secondary_score": 40,
+  "mixed_emotion": true
+}
+```
+
+### Uncertainty Score
+
+Uncertainty should increase when signals disagree.
+
+```text
+uncertainty = average(
+  classifier_uncertainty,
+  disagreement_between_audio_and_text,
+  low_retrieval_relevance,
+  flat_emotion_distribution
+)
+```
+
+Interpretation:
+
+| Uncertainty | Meaning |
+| --- | --- |
+| `0-25` | Strong confidence |
+| `26-50` | Reasonable confidence |
+| `51-75` | Mixed or unclear |
+| `76-100` | Very uncertain; use neutral/careful response |
+
+## Signal Fusion
+
+Use weighted scoring to combine text, audio, wellness, and history.
+
+```text
+final_emotion_score =
+  0.40 * text_emotion_score +
+  0.25 * audio_emotion_score +
+  0.20 * sentiment_vad_score +
+  0.10 * wellness_score +
+  0.05 * conversation_context_score
+```
+
+Suggested weights:
+
+| Signal | Weight | Notes |
+| --- | --- | --- |
+| Text emotion classifier | `40%` | Usually the clearest signal |
+| Audio emotion classifier | `25%` | Useful for tone, but can be noisy |
+| Sentiment / VAD | `20%` | Captures polarity, intensity, control |
+| Wellness signal | `10%` | Stress and heart rate can support emotion detection |
+| Conversation history | `5%` | Helps continuity but should not dominate |
+
+Weights should be configurable later.
+
+## Personality Selection
+
+Personality can be selected by the user or inferred.
+
+| Input Signal | Personality Type |
+| --- | --- |
+| User selected a mode | Use selected personality |
+| Distress, fear, sadness, overwhelm | `caretaker` |
+| Planning, action, goals | `coach` |
+| Explanation, learning, confusion | `teacher` |
+| Formal work, summaries, documents | `professional` |
+| Casual conversation | `peer` |
+
+When emotion is intense, the system can soften any personality type.
+
+Example:
+
+```text
+coach + fear with high arousal = calm coach, not intense coach
+professional + sad = warm professional, not cold professional
+peer + anger = steady peer, not joking peer
+```
+
+## Prompt Context Shape
+
+The LLM should receive compact, structured context:
+
+```json
+{
+  "transcript": "I am overwhelmed and tense. I have too much due today.",
+  "emotion_state": {
+    "top_emotion": "fear",
+    "secondary_emotion": "sad",
+    "mixed_emotion": true,
+    "emotion_distribution": {
+      "neutral": 6,
+      "calm": 4,
+      "happy": 0,
+      "excited": 1,
+      "surprised": 2,
+      "sad": 14,
+      "fear": 68,
+      "angry": 3,
+      "disgust": 2
+    },
+    "sentiment_polarity": -0.72,
+    "sentiment_intensity": 0.86,
+    "valence": 20,
+    "arousal": 82,
+    "dominance": 24,
+    "uncertainty": 32
+  },
+  "personality": {
+    "selected_type": "caretaker",
+    "source": "auto",
+    "fit_score": 88
+  },
+  "retrieved_context": [
+    {
+      "doc_id": "fear/caretaker.qmd#response-style",
+      "emotion": "fear",
+      "personality_type": "caretaker",
+      "section": "Response Style",
+      "relevance": 94,
+      "text": "Use gentle language, validate briefly, lower the energy, and offer one stabilizing next step."
+    },
+    {
+      "doc_id": "sad/caretaker.qmd#response-style",
+      "emotion": "sad",
+      "personality_type": "caretaker",
+      "section": "Response Style",
+      "relevance": 81,
+      "text": "Use warm validation and a small achievable action."
+    }
+  ],
+  "conversation_history": [],
+  "output_contract": "Return valid JSON matching the schema."
+}
+```
+
+## Required LLM Output Format
+
+The LLM should return JSON that can be validated by the backend.
+
+```json
+{
+  "assistant_message": "That sounds like a lot to carry. Take one slow breath, then write the three things due today. Pick the closest deadline and give it 10 quiet minutes.",
+  "emotion_analysis": {
+    "top_emotion": "fear",
+    "secondary_emotion": "sad",
+    "mixed_emotion": true,
+    "confidence_percent": 68,
+    "confidence_distribution": {
+      "neutral": 6,
+      "calm": 4,
+      "happy": 0,
+      "excited": 1,
+      "surprised": 2,
+      "sad": 14,
+      "fear": 68,
+      "angry": 3,
+      "disgust": 2
+    },
+    "sentiment_polarity": -0.72,
+    "sentiment_intensity": 0.86,
+    "valence": 20,
+    "arousal": 82,
+    "dominance": 24,
+    "uncertainty": 32,
+    "evidence": [
+      "User says they are overwhelmed.",
+      "User says they feel tense.",
+      "The message suggests high pressure and low control."
+    ]
+  },
+  "personality_analysis": {
+    "personality_type": "caretaker",
+    "fit_score": 88,
+    "reason": "The user sounds overwhelmed, so a gentle and grounding style is appropriate.",
+    "retrieved_doc_refs": [
+      "fear/caretaker.qmd#response-style",
+      "sad/caretaker.qmd#response-style"
+    ]
+  },
+  "safety": {
+    "distress_detected": true,
+    "requires_crisis_language": false,
+    "medical_or_mental_health_diagnosis": false
+  }
+}
+```
+
+Output rules:
+
+- `assistant_message` must be ready for display and TTS.
+- `confidence_distribution` must include every supported emotion.
+- Emotion confidence values must add up to `100`.
+- `confidence_percent` must equal the top emotion score.
+- `sentiment_polarity` must be between `-1.0` and `1.0`.
+- `sentiment_intensity` must be between `0.0` and `1.0`.
+- `valence`, `arousal`, `dominance`, `uncertainty`, and `fit_score` must be `0-100`.
+- `medical_or_mental_health_diagnosis` should remain `false`.
+- Evidence must come only from the user message, audio/text/wellness signals,
+  conversation history, or retrieved documentation.
+
+## Validation Flow
+
+```{mermaid}
+flowchart TD
+    A[LLM JSON response] --> B{Valid JSON?}
+    B -->|No| C[Fallback response]
+    B -->|Yes| D{Required fields present?}
+    D -->|No| C
+    D -->|Yes| E{Emotion distribution complete?}
+    E -->|No| F[Fill missing emotions with 0]
+    E -->|Yes| G[Check sum]
+    F --> G
+    G --> H{Scores add to 100?}
+    H -->|No| I[Normalize scores]
+    H -->|Yes| J[Accept emotion scores]
+    I --> J
+    J --> K{Ranges valid?}
+    K -->|No| L[Clamp values to valid ranges]
+    K -->|Yes| M[Accept quantified state]
+    L --> M
+    M --> N[Store debug metadata]
+    M --> O[Update UI confidence display]
+    M --> P[Send assistant message to TTS]
+```
+
+## UI Quantification Display
+
+The browser UI should eventually show:
+
+- top emotion: `Fear - 68%`
+- secondary emotion: `Sad - 14%`
+- mixed emotion flag
+- sentiment polarity: `-0.72`
+- sentiment intensity: `0.86`
+- VAD values: `valence 20`, `arousal 82`, `dominance 24`
+- uncertainty: `32%`
+- personality type: `Caretaker - 88% fit`
+- retrieved docs used by the LLM
+- evidence list
+
+## Implementation Roadmap
+
+1. Define the 9 supported emotions.
+2. Define the 5 personality types.
+3. Create 45 QMD guidance docs: one for every emotion-personality pair.
+4. Add metadata to every chunk: `emotion`, `personality_type`, `section`,
+   `priority`, and `safety_level`.
+5. Add sentiment analysis:
+   - polarity
+   - intensity
+   - valence
+   - arousal
+   - dominance
+6. Add signal fusion to combine text, audio, wellness, and history.
+7. Add RAG retrieval for the top emotion and selected personality type.
+8. Pass retrieved context into the LLM prompt.
+9. Require structured JSON output.
+10. Validate and normalize all numeric values.
+11. Show confidence, sentiment, personality, and retrieved-context details in the UI.
+
+## Final Workflow
+
+```{mermaid}
+flowchart TD
+    A[Emotion-personality QMD docs] --> B[Chunk + embed]
+    B --> C[Vector database]
+
+    D[User text or voice] --> E[Transcript]
+    E --> F[Sentiment + emotion analysis]
+    F --> G[Quantified emotion state]
+    G --> H[Personality selection]
+    H --> I[RAG query]
+    C --> J[Retrieve matching docs]
+    I --> J
+    J --> K[Prompt builder]
+    E --> K
+    G --> K
+    K --> L[LLM]
+    L --> M[Structured JSON output]
+    M --> N[Validate + normalize]
+    N --> O[Assistant message]
+    N --> P[Emotion/personality debug data]
+    O --> Q[TTS]
+    Q --> R[Browser playback]
+    P --> S[UI confidence panels]
+```

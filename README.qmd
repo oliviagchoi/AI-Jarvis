@@ -1,0 +1,229 @@
+---
+title: Jarvis Assistant Project Idea
+author: Nav Sanya Anand
+format: 
+  html: 
+    mermaid: {}
+
+---
+
+
+This folder documents the current project idea and the working system flow for the
+Jarvis Assistant so far.
+
+## One-Line Idea
+
+Jarvis is an emotion-aware voice assistant that accepts text or speech, detects the
+user's emotional state, retrieves persona-aware response guidance, stores recent
+conversation context, and returns both a text reply and a synthesized voice artifact.
+
+## Current Product Shape
+
+- Frontend: browser console at `/ui` with text chat, manual voice turns, wake phrase
+  support, wellness demo inputs, emotion monitor, conversation history, and audio
+  playback.
+- Backend: FastAPI service with REST endpoints for chat, voice upload, history, and
+  health checks.
+- Orchestration: `AssistantOrchestrator` coordinates transcription, emotion detection,
+  memory, LLM response generation, and text-to-speech output.
+- Persona guidance: `app/services/rag.py` loads a prebuilt
+  `persona_id + detected_emotion` cache from `corpus/persona_guidance.json` before
+  prompt rendering, avoiding runtime vector search or extra LLM calls.
+- Memory: recent turns are stored as `ConversationTurn` rows with role, content,
+  session id, emotion, and timestamp.
+- Database: MySQL is the primary configured database; SQLite is used as a fallback
+  when MySQL is unavailable.
+
+## Models And Providers In Use
+
+The current `.env` is configured for the legacy voice pipeline and Bedrock LLM path.
+Secrets are intentionally not documented here.
+
+| Layer | Active / Configured Model | Provider / Library | Current Status | Purpose |
+| --- | --- | --- | --- | --- |
+| Main LLM | `us.anthropic.claude-haiku-4-5-20251001-v1:0` | AWS Bedrock | Active because `LLM_PROVIDER=bedrock` | Generates Jarvis responses using prompt context, detected emotion, wellness signal, and recent history. |
+| Alternate LLM | `llama-3.3-70b-versatile` | Groq | Configured as an alternate, inactive unless `LLM_PROVIDER=groq` | Can replace Bedrock for chat completion generation. |
+| Realtime Model | `gpt-4o-mini-realtime-preview` | OpenAI config value | Configured but not wired into the current FastAPI flow | Reserved for possible future realtime voice work. |
+| Speech-to-Text | `base` | OpenAI Whisper package | Active in legacy voice mode | Transcribes uploaded voice audio into text. |
+| Audio Emotion | `Dpngtm/wav2vec2-emotion-recognition` | Hugging Face Transformers | Active in legacy voice mode when dependencies are available | Classifies the audio emotion from the uploaded clip. |
+| Text Emotion | Keyword scoring map in `EmotionService` | Local Python logic | Active for text chat and hybrid voice emotion decisions | Detects emotion cues from transcript text. |
+| Optional Voice Understanding | `iic/SenseVoiceSmall` | FunASR / ModelScope | Present but disabled because `VOICE_UNDERSTANDING_PROVIDER=legacy` | If enabled, produces transcript, emotion tags, language, and audio event metadata in one pass. |
+| Voice Output | `tts_models/en/ljspeech/tacotron2-DDC` | Coqui TTS | Used when installed; otherwise falls back to text artifact output | Synthesizes Jarvis replies into `.wav` files. |
+
+Current generation settings:
+
+- `LLM_TEMPERATURE=0.4`
+- `LLM_MAX_TOKENS=300`
+- `BEDROCK_REGION=us-west-2`
+- `WHISPER_LANGUAGE=en`
+- `WHISPER_TASK=transcribe`
+- `SENSEVOICE_DEVICE=cpu`
+- `SENSEVOICE_LANGUAGE=auto`
+- `SENSEVOICE_VAD_MODEL=fsmn-vad`
+
+## Emotion Set
+
+Jarvis uses emotions in three places: detection, LLM tone guidance, and frontend
+visual state.
+
+| Emotion | How It Can Be Detected | LLM Response Guidance | UI Treatment |
+| --- | --- | --- | --- |
+| `neutral` | Fallback state, neutral audio, no text keyword hit, SenseVoice `neutral` or `emo_unk` | Concise, helpful, emotionally steady | Neutral baseline |
+| `calm` | Audio model label | Relaxed, confident, smooth pacing | Calm visual state |
+| `happy` | Audio labels like joy/happiness/happy, positive text keywords, SenseVoice `happy` | Upbeat, clear, positive, still concise | Happy visual state |
+| `excited` | Possible audio label or frontend state; text word `excited` currently maps into `happy` | Upbeat and clear when passed through as detected emotion | Excited visual state |
+| `surprised` | Audio labels surprise/surprised, SenseVoice `surprised` | Upbeat and clear | Surprised visual state |
+| `sad` | Audio labels sad/sadness, sad text keywords, SenseVoice `sad` | Warm, gentle, validating, with a small practical action | Sad visual state |
+| `fear` | Audio labels fear/fearful, stress/anxiety text keywords, SenseVoice `fearful` or `fear` | Grounded, reassuring, lower energy, one or two stabilizing next steps | Labeled as stressed/anxious |
+| `angry` | Audio labels anger/angry, angry text keywords, SenseVoice `angry` | Calm, de-escalating, respectful, solution-oriented | Angry visual state |
+| `disgust` | SenseVoice `disgusted` tag | Falls back to the default LLM guidance unless specific guidance is added | Currently falls back to neutral UI styling |
+
+### Text Emotion Keywords
+
+The local keyword detector currently checks these emotion groups:
+
+- `happy`: happy, excited, great, awesome, good, glad, love, amazing, fantastic, wonderful
+- `sad`: sad, upset, frustrated, depressed, down, tired, hurt, cry, lonely, hopeless
+- `angry`: angry, mad, furious, annoyed, irritated, hate
+- `fear`: afraid, scared, nervous, worried, anxious, panic, overwhelmed, stressed, stress, tense
+
+### Hybrid Emotion Decision Rules
+
+In legacy voice mode, Jarvis combines audio emotion and transcript keyword emotion:
+
+1. Start with the audio classifier result.
+2. If no text emotion is found, keep audio emotion or fall back to `neutral`.
+3. If audio confidence is below `0.55`, use the text emotion.
+4. If audio is `neutral` or `calm` and text confidence is at least `0.45`, use the
+   text emotion.
+5. If audio and text disagree, use text only when text confidence is at least
+   `0.12` higher than audio confidence.
+6. Otherwise keep the audio emotion.
+
+## Main Working Flow
+
+```{mermaid}
+flowchart TD
+    A[User opens browser UI at /ui] --> B{Interaction type}
+
+    B -->|Text turn| C[POST /api/chat]
+    B -->|Voice turn| D[Record audio in browser]
+    D --> E[POST /api/voice multipart upload]
+    E --> F[Save audio file to uploads/]
+    F --> G{VOICE_UNDERSTANDING_PROVIDER}
+
+    G -->|legacy - current config| H[Whisper transcribes audio]
+    H --> I[Hybrid emotion detection]
+    I --> I1[Audio classifier]
+    I --> I2[Transcript keyword scoring]
+    I1 --> J[Choose final detected_emotion]
+    I2 --> J
+
+    G -->|sensevoice - optional| K[SenseVoice processes audio]
+    K --> L[Transcript + emotion + language + event metadata]
+    L --> M[Build emotion debug payload]
+    J --> N[Handle as chat turn]
+    M --> N
+    C --> N
+
+    N --> O[Load recent session history]
+    O --> P[Retrieve persona + emotion guidance]
+    P --> P1[Build prompt context payload]
+    P1 --> Q[LLM generates Jarvis reply]
+    Q --> R[Coqui TTS attempts voice synthesis]
+    R --> S{TTS available?}
+    S -->|yes| T[Save generated_audio/session-response.wav]
+    S -->|no| U[Save generated_audio/session-response.txt]
+    T --> V[Store user and assistant turns in database]
+    U --> V
+    V --> W[Return ChatResponse JSON]
+    W --> X[UI updates transcript, reply, emotion monitor, history, and audio player]
+```
+
+## Text Chat Flow
+
+```{mermaid}
+flowchart TD
+    A[User sends text] --> B[POST /api/chat]
+    B --> C[Detect emotion from text keywords]
+    C --> D[Fetch up to 12 recent turns]
+    D --> D1[Retrieve persona guidance]
+    D1 --> E[Create context payload]
+    E --> F[Render prompts/jarvis_chat.txt]
+    F --> G{LLM_PROVIDER}
+    G -->|bedrock - current| H[Invoke AWS Bedrock model]
+    G -->|groq - optional| I[Invoke Groq chat completion]
+    H --> J[Jarvis text reply]
+    I --> J
+    J --> K[Generate TTS or text artifact]
+    K --> L[Save user and assistant turns]
+    L --> M[Return response to UI]
+```
+
+## Emotion Decision Flow
+
+```{mermaid}
+flowchart TD
+    A[Transcript and optional audio clip] --> B{Voice path?}
+    B -->|Text-only chat| C[Keyword emotion detector]
+    C --> D{Any keyword hit?}
+    D -->|yes| E[Use keyword emotion]
+    D -->|no| F[Use neutral]
+
+    B -->|Legacy voice| G[Audio emotion classifier]
+    G --> H[Keyword emotion detector]
+    H --> I{Text score is 0?}
+    I -->|yes| J{Audio score is 0?}
+    J -->|yes| F
+    J -->|no| K[Use audio emotion]
+    I -->|no| L{Audio score < 0.55?}
+    L -->|yes| E
+    L -->|no| M{Audio neutral/calm and text score >= 0.45?}
+    M -->|yes| E
+    M -->|no| N{Text score >= audio score + 0.12?}
+    N -->|yes| E
+    N -->|no| K
+
+    B -->|SenseVoice optional| O[SenseVoice tag extraction]
+    O --> P[Map tags to emotion]
+```
+
+## Prompt Context Sent To The LLM
+
+The LLM receives the rendered `prompts/jarvis_chat.txt` template. The context payload
+contains:
+
+- `detected_emotion`
+- `emotion_guidance`
+- `user_profile`
+- recent `conversation_history`
+- optional `wellness_signal`
+
+The prompt instructs Jarvis to be calm, concise, practical, easy to say out loud,
+emotion-aware, supportive during distress, and careful not to invent personal facts.
+
+## API Surface So Far
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /` | Basic service status message |
+| `GET /ui` | Browser voice console |
+| `GET /health` | Provider status for LLM, STT, emotion, TTS, and database |
+| `POST /api/chat` | Text chat turn |
+| `POST /api/voice` | Voice upload turn with optional transcript override and wellness inputs |
+| `GET /api/personas` | List available persona profiles |
+| `GET /api/history/{session_id}` | Fetch recent conversation turns |
+| `DELETE /api/history/{session_id}` | Clear a session's conversation history |
+| `WS /ws/chat` | Minimal websocket chat path using neutral emotion and no memory |
+
+## Project Status So Far
+
+- Working backend app factory and FastAPI routes are in place.
+- Browser UI supports text, voice recording, wake phrase listening, playback speed,
+  emotion display, raw JSON diagnostics, and history.
+- Bedrock is the current LLM provider in `.env`.
+- Legacy voice mode is active: Whisper plus hybrid emotion detection.
+- SenseVoice is implemented but currently disabled by configuration.
+- TTS attempts Coqui synthesis and gracefully falls back to text output when Coqui is
+  unavailable.
+- Conversation history is persisted per session and cleared on app startup.

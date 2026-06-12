@@ -1,0 +1,49 @@
+{
+  "generated_by": "scripts/generate_demo_assets.py",
+  "scenarios": [
+    {
+      "id": "stressed_focus",
+      "label": "Stressed Focus",
+      "heart_rate": 108,
+      "stress_level": "high",
+      "transcript_override": "I have too much to do and I cannot focus right now.",
+      "audio_file": "stressed_focus.wav",
+      "tone_hz": 330,
+      "duration_seconds": 1.8,
+      "notes": "Use this to demo a calming, grounded response."
+    },
+    {
+      "id": "excited_win",
+      "label": "Excited Win",
+      "heart_rate": 96,
+      "stress_level": "low",
+      "transcript_override": "I just finished my project and I am really excited about it.",
+      "audio_file": "excited_win.wav",
+      "tone_hz": 520,
+      "duration_seconds": 1.6,
+      "notes": "Use this to show an upbeat response style."
+    },
+    {
+      "id": "sad_support",
+      "label": "Sad Support",
+      "heart_rate": 74,
+      "stress_level": "moderate",
+      "transcript_override": "I have been feeling down today and I could use encouragement.",
+      "audio_file": "sad_support.wav",
+      "tone_hz": 220,
+      "duration_seconds": 2.0,
+      "notes": "Use this to show warm, supportive behavior."
+    },
+    {
+      "id": "remember_preference",
+      "label": "Remember Preference",
+      "heart_rate": 72,
+      "stress_level": "",
+      "transcript_override": "Please remember that I like short answers.",
+      "audio_file": "remember_preference.wav",
+      "tone_hz": 410,
+      "duration_seconds": 1.5,
+      "notes": "Use this before a follow-up prompt to demo preference memory."
+    }
+  ]
+}

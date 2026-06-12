@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Nav Sanya Anand">
+
+<title>Jarvis Assistant Project Idea</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="README_files/libs/clipboard/clipboard.min.js"></script>
+<script src="README_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="README_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="README_files/libs/quarto-html/popper.min.js"></script>
+<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="README_files/libs/quarto-html/anchor.min.js"></script>
+<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="README_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<meta name="mermaid-theme" content="neutral">
+<script src="README_files/libs/quarto-diagram/mermaid.min.js"></script>
+<script src="README_files/libs/quarto-diagram/mermaid-init.js"></script>
+<link href="README_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Jarvis Assistant Project Idea</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Nav Sanya Anand </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This folder documents the current project idea and the working system flow for the Jarvis Assistant so far.</p>
+<section id="one-line-idea" class="level2">
+<h2 class="anchored" data-anchor-id="one-line-idea">One-Line Idea</h2>
+<p>Jarvis is an emotion-aware voice assistant that accepts text or speech, detects the user’s emotional state, gives the language model emotional guidance, stores recent conversation context, and returns both a text reply and a synthesized voice artifact.</p>
+</section>
+<section id="current-product-shape" class="level2">
+<h2 class="anchored" data-anchor-id="current-product-shape">Current Product Shape</h2>
+<ul>
+<li>Frontend: browser console at <code>/ui</code> with text chat, manual voice turns, wake phrase support, wellness demo inputs, emotion monitor, conversation history, and audio playback.</li>
+<li>Backend: FastAPI service with REST endpoints for chat, voice upload, history, and health checks.</li>
+<li>Orchestration: <code>AssistantOrchestrator</code> coordinates transcription, emotion detection, memory, LLM response generation, and text-to-speech output.</li>
+<li>Memory: recent turns are stored as <code>ConversationTurn</code> rows with role, content, session id, emotion, and timestamp.</li>
+<li>Database: MySQL is the primary configured database; SQLite is used as a fallback when MySQL is unavailable.</li>
+</ul>
+</section>
+<section id="models-and-providers-in-use" class="level2">
+<h2 class="anchored" data-anchor-id="models-and-providers-in-use">Models And Providers In Use</h2>
+<p>The current <code>.env</code> is configured for the legacy voice pipeline and Bedrock LLM path. Secrets are intentionally not documented here.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Active / Configured Model</th>
+<th>Provider / Library</th>
+<th>Current Status</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Main LLM</td>
+<td><code>us.anthropic.claude-haiku-4-5-20251001-v1:0</code></td>
+<td>AWS Bedrock</td>
+<td>Active because <code>LLM_PROVIDER=bedrock</code></td>
+<td>Generates Jarvis responses using prompt context, detected emotion, wellness signal, and recent history.</td>
+</tr>
+<tr class="even">
+<td>Alternate LLM</td>
+<td><code>llama-3.3-70b-versatile</code></td>
+<td>Groq</td>
+<td>Configured as an alternate, inactive unless <code>LLM_PROVIDER=groq</code></td>
+<td>Can replace Bedrock for chat completion generation.</td>
+</tr>
+<tr class="odd">
+<td>Realtime Model</td>
+<td><code>gpt-4o-mini-realtime-preview</code></td>
+<td>OpenAI config value</td>
+<td>Configured but not wired into the current FastAPI flow</td>
+<td>Reserved for possible future realtime voice work.</td>
+</tr>
+<tr class="even">
+<td>Speech-to-Text</td>
+<td><code>base</code></td>
+<td>OpenAI Whisper package</td>
+<td>Active in legacy voice mode</td>
+<td>Transcribes uploaded voice audio into text.</td>
+</tr>
+<tr class="odd">
+<td>Audio Emotion</td>
+<td><code>Dpngtm/wav2vec2-emotion-recognition</code></td>
+<td>Hugging Face Transformers</td>
+<td>Active in legacy voice mode when dependencies are available</td>
+<td>Classifies the audio emotion from the uploaded clip.</td>
+</tr>
+<tr class="even">
+<td>Text Emotion</td>
+<td>Keyword scoring map in <code>EmotionService</code></td>
+<td>Local Python logic</td>
+<td>Active for text chat and hybrid voice emotion decisions</td>
+<td>Detects emotion cues from transcript text.</td>
+</tr>
+<tr class="odd">
+<td>Optional Voice Understanding</td>
+<td><code>iic/SenseVoiceSmall</code></td>
+<td>FunASR / ModelScope</td>
+<td>Present but disabled because <code>VOICE_UNDERSTANDING_PROVIDER=legacy</code></td>
+<td>If enabled, produces transcript, emotion tags, language, and audio event metadata in one pass.</td>
+</tr>
+<tr class="even">
+<td>Voice Output</td>
+<td><code>tts_models/en/ljspeech/tacotron2-DDC</code></td>
+<td>Coqui TTS</td>
+<td>Used when installed; otherwise falls back to text artifact output</td>
+<td>Synthesizes Jarvis replies into <code>.wav</code> files.</td>
+</tr>
+</tbody>
+</table>
+<p>Current generation settings:</p>
+<ul>
+<li><code>LLM_TEMPERATURE=0.4</code></li>
+<li><code>LLM_MAX_TOKENS=300</code></li>
+<li><code>BEDROCK_REGION=us-west-2</code></li>
+<li><code>WHISPER_LANGUAGE=en</code></li>
+<li><code>WHISPER_TASK=transcribe</code></li>
+<li><code>SENSEVOICE_DEVICE=cpu</code></li>
+<li><code>SENSEVOICE_LANGUAGE=auto</code></li>
+<li><code>SENSEVOICE_VAD_MODEL=fsmn-vad</code></li>
+</ul>
+</section>
+<section id="emotion-set" class="level2">
+<h2 class="anchored" data-anchor-id="emotion-set">Emotion Set</h2>
+<p>Jarvis uses emotions in three places: detection, LLM tone guidance, and frontend visual state.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Emotion</th>
+<th>How It Can Be Detected</th>
+<th>LLM Response Guidance</th>
+<th>UI Treatment</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>neutral</code></td>
+<td>Fallback state, neutral audio, no text keyword hit, SenseVoice <code>neutral</code> or <code>emo_unk</code></td>
+<td>Concise, helpful, emotionally steady</td>
+<td>Neutral baseline</td>
+</tr>
+<tr class="even">
+<td><code>calm</code></td>
+<td>Audio model label</td>
+<td>Relaxed, confident, smooth pacing</td>
+<td>Calm visual state</td>
+</tr>
+<tr class="odd">
+<td><code>happy</code></td>
+<td>Audio labels like joy/happiness/happy, positive text keywords, SenseVoice <code>happy</code></td>
+<td>Upbeat, clear, positive, still concise</td>
+<td>Happy visual state</td>
+</tr>
+<tr class="even">
+<td><code>excited</code></td>
+<td>Possible audio label or frontend state; text word <code>excited</code> currently maps into <code>happy</code></td>
+<td>Upbeat and clear when passed through as detected emotion</td>
+<td>Excited visual state</td>
+</tr>
+<tr class="odd">
+<td><code>surprised</code></td>
+<td>Audio labels surprise/surprised, SenseVoice <code>surprised</code></td>
+<td>Upbeat and clear</td>
+<td>Surprised visual state</td>
+</tr>
+<tr class="even">
+<td><code>sad</code></td>
+<td>Audio labels sad/sadness, sad text keywords, SenseVoice <code>sad</code></td>
+<td>Warm, gentle, validating, with a small practical action</td>
+<td>Sad visual state</td>
+</tr>
+<tr class="odd">
+<td><code>fear</code></td>
+<td>Audio labels fear/fearful, stress/anxiety text keywords, SenseVoice <code>fearful</code> or <code>fear</code></td>
+<td>Grounded, reassuring, lower energy, one or two stabilizing next steps</td>
+<td>Labeled as stressed/anxious</td>
+</tr>
+<tr class="even">
+<td><code>angry</code></td>
+<td>Audio labels anger/angry, angry text keywords, SenseVoice <code>angry</code></td>
+<td>Calm, de-escalating, respectful, solution-oriented</td>
+<td>Angry visual state</td>
+</tr>
+<tr class="odd">
+<td><code>disgust</code></td>
+<td>SenseVoice <code>disgusted</code> tag</td>
+<td>Falls back to the default LLM guidance unless specific guidance is added</td>
+<td>Currently falls back to neutral UI styling</td>
+</tr>
+</tbody>
+</table>
+<section id="text-emotion-keywords" class="level3">
+<h3 class="anchored" data-anchor-id="text-emotion-keywords">Text Emotion Keywords</h3>
+<p>The local keyword detector currently checks these emotion groups:</p>
+<ul>
+<li><code>happy</code>: happy, excited, great, awesome, good, glad, love, amazing, fantastic, wonderful</li>
+<li><code>sad</code>: sad, upset, frustrated, depressed, down, tired, hurt, cry, lonely, hopeless</li>
+<li><code>angry</code>: angry, mad, furious, annoyed, irritated, hate</li>
+<li><code>fear</code>: afraid, scared, nervous, worried, anxious, panic, overwhelmed, stressed, stress, tense</li>
+</ul>
+</section>
+<section id="hybrid-emotion-decision-rules" class="level3">
+<h3 class="anchored" data-anchor-id="hybrid-emotion-decision-rules">Hybrid Emotion Decision Rules</h3>
+<p>In legacy voice mode, Jarvis combines audio emotion and transcript keyword emotion:</p>
+<ol type="1">
+<li>Start with the audio classifier result.</li>
+<li>If no text emotion is found, keep audio emotion or fall back to <code>neutral</code>.</li>
+<li>If audio confidence is below <code>0.55</code>, use the text emotion.</li>
+<li>If audio is <code>neutral</code> or <code>calm</code> and text confidence is at least <code>0.45</code>, use the text emotion.</li>
+<li>If audio and text disagree, use text only when text confidence is at least <code>0.12</code> higher than audio confidence.</li>
+<li>Otherwise keep the audio emotion.</li>
+</ol>
+</section>
+</section>
+<section id="main-working-flow" class="level2">
+<h2 class="anchored" data-anchor-id="main-working-flow">Main Working Flow</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[User opens browser UI at /ui] --&gt; B{Interaction type}
+
+    B --&gt;|Text turn| C[POST /api/chat]
+    B --&gt;|Voice turn| D[Record audio in browser]
+    D --&gt; E[POST /api/voice multipart upload]
+    E --&gt; F[Save audio file to uploads/]
+    F --&gt; G{VOICE_UNDERSTANDING_PROVIDER}
+
+    G --&gt;|legacy - current config| H[Whisper transcribes audio]
+    H --&gt; I[Hybrid emotion detection]
+    I --&gt; I1[Audio classifier]
+    I --&gt; I2[Transcript keyword scoring]
+    I1 --&gt; J[Choose final detected_emotion]
+    I2 --&gt; J
+
+    G --&gt;|sensevoice - optional| K[SenseVoice processes audio]
+    K --&gt; L[Transcript + emotion + language + event metadata]
+    L --&gt; M[Build emotion debug payload]
+    J --&gt; N[Handle as chat turn]
+    M --&gt; N
+    C --&gt; N
+
+    N --&gt; O[Load recent session history]
+    O --&gt; P[Build prompt context payload]
+    P --&gt; Q[LLM generates Jarvis reply]
+    Q --&gt; R[Coqui TTS attempts voice synthesis]
+    R --&gt; S{TTS available?}
+    S --&gt;|yes| T[Save generated_audio/session-response.wav]
+    S --&gt;|no| U[Save generated_audio/session-response.txt]
+    T --&gt; V[Store user and assistant turns in database]
+    U --&gt; V
+    V --&gt; W[Return ChatResponse JSON]
+    W --&gt; X[UI updates transcript, reply, emotion monitor, history, and audio player]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="text-chat-flow" class="level2">
+<h2 class="anchored" data-anchor-id="text-chat-flow">Text Chat Flow</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[User sends text] --&gt; B[POST /api/chat]
+    B --&gt; C[Detect emotion from text keywords]
+    C --&gt; D[Fetch up to 12 recent turns]
+    D --&gt; E[Create context payload]
+    E --&gt; F[Render prompts/jarvis_chat.txt]
+    F --&gt; G{LLM_PROVIDER}
+    G --&gt;|bedrock - current| H[Invoke AWS Bedrock model]
+    G --&gt;|groq - optional| I[Invoke Groq chat completion]
+    H --&gt; J[Jarvis text reply]
+    I --&gt; J
+    J --&gt; K[Generate TTS or text artifact]
+    K --&gt; L[Save user and assistant turns]
+    L --&gt; M[Return response to UI]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="emotion-decision-flow" class="level2">
+<h2 class="anchored" data-anchor-id="emotion-decision-flow">Emotion Decision Flow</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[Transcript and optional audio clip] --&gt; B{Voice path?}
+    B --&gt;|Text-only chat| C[Keyword emotion detector]
+    C --&gt; D{Any keyword hit?}
+    D --&gt;|yes| E[Use keyword emotion]
+    D --&gt;|no| F[Use neutral]
+
+    B --&gt;|Legacy voice| G[Audio emotion classifier]
+    G --&gt; H[Keyword emotion detector]
+    H --&gt; I{Text score is 0?}
+    I --&gt;|yes| J{Audio score is 0?}
+    J --&gt;|yes| F
+    J --&gt;|no| K[Use audio emotion]
+    I --&gt;|no| L{Audio score &lt; 0.55?}
+    L --&gt;|yes| E
+    L --&gt;|no| M{Audio neutral/calm and text score &gt;= 0.45?}
+    M --&gt;|yes| E
+    M --&gt;|no| N{Text score &gt;= audio score + 0.12?}
+    N --&gt;|yes| E
+    N --&gt;|no| K
+
+    B --&gt;|SenseVoice optional| O[SenseVoice tag extraction]
+    O --&gt; P[Map tags to emotion]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="prompt-context-sent-to-the-llm" class="level2">
+<h2 class="anchored" data-anchor-id="prompt-context-sent-to-the-llm">Prompt Context Sent To The LLM</h2>
+<p>The LLM receives the rendered <code>prompts/jarvis_chat.txt</code> template. The context payload contains:</p>
+<ul>
+<li><code>detected_emotion</code></li>
+<li><code>emotion_guidance</code></li>
+<li>recent <code>conversation_history</code></li>
+<li>optional <code>wellness_signal</code></li>
+</ul>
+<p>The prompt instructs Jarvis to be calm, concise, practical, easy to say out loud, emotion-aware, supportive during distress, and careful not to invent personal facts.</p>
+</section>
+<section id="api-surface-so-far" class="level2">
+<h2 class="anchored" data-anchor-id="api-surface-so-far">API Surface So Far</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>GET /</code></td>
+<td>Basic service status message</td>
+</tr>
+<tr class="even">
+<td><code>GET /ui</code></td>
+<td>Browser voice console</td>
+</tr>
+<tr class="odd">
+<td><code>GET /health</code></td>
+<td>Provider status for LLM, STT, emotion, TTS, and database</td>
+</tr>
+<tr class="even">
+<td><code>POST /api/chat</code></td>
+<td>Text chat turn</td>
+</tr>
+<tr class="odd">
+<td><code>POST /api/voice</code></td>
+<td>Voice upload turn with optional transcript override and wellness inputs</td>
+</tr>
+<tr class="even">
+<td><code>GET /api/history/{session_id}</code></td>
+<td>Fetch recent conversation turns</td>
+</tr>
+<tr class="odd">
+<td><code>DELETE /api/history/{session_id}</code></td>
+<td>Clear a session’s conversation history</td>
+</tr>
+<tr class="even">
+<td><code>WS /ws/chat</code></td>
+<td>Minimal websocket chat path using neutral emotion and no memory</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="project-status-so-far" class="level2">
+<h2 class="anchored" data-anchor-id="project-status-so-far">Project Status So Far</h2>
+<ul>
+<li>Working backend app factory and FastAPI routes are in place.</li>
+<li>Browser UI supports text, voice recording, wake phrase listening, playback speed, emotion display, raw JSON diagnostics, and history.</li>
+<li>Bedrock is the current LLM provider in <code>.env</code>.</li>
+<li>Legacy voice mode is active: Whisper plus hybrid emotion detection.</li>
+<li>SenseVoice is implemented but currently disabled by configuration.</li>
+<li>TTS attempts Coqui synthesis and gracefully falls back to text output when Coqui is unavailable.</li>
+<li>Conversation history is persisted per session and cleared on app startup.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

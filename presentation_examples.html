@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>presentation_examples</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="presentation_examples_files/libs/clipboard/clipboard.min.js"></script>
+<script src="presentation_examples_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="presentation_examples_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="presentation_examples_files/libs/quarto-html/popper.min.js"></script>
+<script src="presentation_examples_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="presentation_examples_files/libs/quarto-html/anchor.min.js"></script>
+<link href="presentation_examples_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="presentation_examples_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="presentation_examples_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="presentation_examples_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="presentation_examples_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="jarvis-presentation-examples" class="level1">
+<h1>Jarvis Presentation Examples</h1>
+<p>These examples are slide-ready scenarios for explaining why Jarvis uses emotion detection, persona guidance, and a lightweight retrieval cache.</p>
+<section id="internet-backed-framing-examples" class="level2">
+<h2 class="anchored" data-anchor-id="internet-backed-framing-examples">Internet-Backed Framing Examples</h2>
+<section id="why-emotion-aware-support-matters" class="level3">
+<h3 class="anchored" data-anchor-id="why-emotion-aware-support-matters">1. Why Emotion-Aware Support Matters</h3>
+<p>Research on graduate education reports elevated anxiety and depression signals among graduate students, which makes MSBA/student stress a realistic target demo context. Jarvis should not diagnose or act like therapy; it should detect emotional state and adapt tone, pacing, and next-step support.</p>
+<p>Presentation line:</p>
+<blockquote class="blockquote">
+<p>Graduate students are a high-pressure audience, so Jarvis focuses on practical, emotionally aware support rather than generic chatbot replies.</p>
+</blockquote>
+<p>Use with:</p>
+<ul>
+<li>Persona: <code>priya_shah</code></li>
+<li>Emotion: <code>fear</code></li>
+<li>Demo user line: “I have a presentation tomorrow and I cannot focus. I feel like I am going to fail.”</li>
+</ul>
+<p>Jarvis demo response:</p>
+<blockquote class="blockquote">
+<p>You are not failing; you are overloaded. Let’s shrink this to one controllable move: open the deck, fix the weakest slide first, and give it 15 focused minutes.</p>
+</blockquote>
+<p>Source:</p>
+<ul>
+<li>Evans et al., Nature Biotechnology, “Evidence for a mental health crisis in graduate education”: https://www.nature.com/articles/nbt.4089</li>
+<li>Evans et al.&nbsp;reply with reported graduate-student anxiety/depression rates in their sample: https://www.nature.com/articles/s41587-019-0181-4</li>
+</ul>
+</section>
+<section id="emotion-aware-voice-ai-is-already-a-product-direction" class="level3">
+<h3 class="anchored" data-anchor-id="emotion-aware-voice-ai-is-already-a-product-direction">2. Emotion-Aware Voice AI Is Already a Product Direction</h3>
+<p>Hume’s Empathic Voice Interface positions voice AI around vocal expression, prosody, timing, and emotionally attuned responses. Jarvis can frame itself as a student project version of the same design direction: listen to how the user sounds, detect emotion, then adapt the response.</p>
+<p>Presentation line:</p>
+<blockquote class="blockquote">
+<p>The broader AI market is moving from “assistant that answers” to “assistant that listens, senses context, and responds with the right emotional pacing.”</p>
+</blockquote>
+<p>Use with:</p>
+<ul>
+<li>Persona: <code>sam_rivera</code></li>
+<li>Emotion: <code>sad</code></li>
+<li>Demo user line: “I thought I did okay, but the feedback made me feel really small.”</li>
+</ul>
+<p>Jarvis demo response:</p>
+<blockquote class="blockquote">
+<p>That kind of feedback can sting, especially when you were trying hard. Let’s hold both things at once: it hurt, and it may still contain one useful signal you can use.</p>
+</blockquote>
+<p>Source:</p>
+<ul>
+<li>Hume AI EVI docs: https://dev.hume.ai/docs/speech-to-speech-evi/overview</li>
+</ul>
+</section>
+<section id="empathetic-dialogue-is-a-known-ai-research-problem" class="level3">
+<h3 class="anchored" data-anchor-id="empathetic-dialogue-is-a-known-ai-research-problem">3. Empathetic Dialogue Is a Known AI Research Problem</h3>
+<p>The EmpatheticDialogues benchmark was built around conversations grounded in emotional situations. That supports the Jarvis design choice: the model needs an explicit emotional context, not only the user’s literal words.</p>
+<p>Presentation line:</p>
+<blockquote class="blockquote">
+<p>Empathetic response generation is a known benchmark problem. Jarvis makes that practical by injecting detected emotion and persona-specific guidance into the prompt.</p>
+</blockquote>
+<p>Use with:</p>
+<ul>
+<li>Persona: <code>maya_chen</code></li>
+<li>Emotion: <code>sad</code></li>
+<li>Demo user line: “My group chat went quiet after I sent my idea. I think they all hate it.”</li>
+</ul>
+<p>Jarvis demo response:</p>
+<blockquote class="blockquote">
+<p>That silence would make a lot of people spiral. It does not automatically mean they hate the idea; it may just mean nobody has responded yet. If you want, send one calm follow-up asking whether they want a shorter version or a different direction.</p>
+</blockquote>
+<p>Source:</p>
+<ul>
+<li>Rashkin et al., “Towards Empathetic Open-domain Conversation Models”: https://arxiv.org/abs/1811.00207</li>
+</ul>
+</section>
+<section id="conversational-support-has-been-studied-with-young-adults" class="level3">
+<h3 class="anchored" data-anchor-id="conversational-support-has-been-studied-with-young-adults">4. Conversational Support Has Been Studied With Young Adults</h3>
+<p>A randomized Woebot study recruited young adults from a university community and tested a conversational CBT-style chatbot. Jarvis should not claim therapy outcomes, but the study is useful evidence that conversational agents can be studied for student-support contexts.</p>
+<p>Presentation line:</p>
+<blockquote class="blockquote">
+<p>We are not building therapy. We are building a safer assistant pattern: acknowledge emotion, avoid diagnosis, and offer one practical next step.</p>
+</blockquote>
+<p>Use with:</p>
+<ul>
+<li>Persona: <code>default_danny</code></li>
+<li>Emotion: <code>fear</code></li>
+<li>Demo user line: “I am stressed and I do not know what to do first.”</li>
+</ul>
+<p>Jarvis demo response:</p>
+<blockquote class="blockquote">
+<p>Start with the task that reduces the most pressure. Pick one, set a 15-minute timer, and ignore everything else until that timer ends.</p>
+</blockquote>
+<p>Source:</p>
+<ul>
+<li>Fitzpatrick, Darcy, and Vierhile, JMIR Mental Health, Woebot randomized trial: https://mental.jmir.org/2017/2/e19/</li>
+</ul>
+</section>
+<section id="rag-explains-the-long-term-architecture" class="level3">
+<h3 class="anchored" data-anchor-id="rag-explains-the-long-term-architecture">5. RAG Explains the Long-Term Architecture</h3>
+<p>AWS frames RAG as retrieving information from data sources to improve relevance and accuracy. Jarvis currently uses a simple JSON cache instead of vector retrieval: <code>persona_id + detected_emotion -&gt; guidance</code>. This is fast, explainable, and enough for the presentation demo. Later, uploaded documents can be chunked, embedded, and retrieved with a vector database.</p>
+<p>Presentation line:</p>
+<blockquote class="blockquote">
+<p>Version one is intentionally not full vector RAG. It is a prebuilt guidance lookup: faster at runtime, easier to inspect, and perfect for a 54-cell persona-emotion matrix.</p>
+</blockquote>
+<p>Use with:</p>
+<ul>
+<li>Slide visual:</li>
+</ul>
+<pre class="text"><code>User input
+-&gt; emotion detection
+-&gt; persona_id + emotion lookup
+-&gt; prompt context
+-&gt; LLM response
+-&gt; TTS output</code></pre>
+<p>Source:</p>
+<ul>
+<li>AWS Bedrock Knowledge Bases docs: https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html</li>
+</ul>
+</section>
+</section>
+<section id="persona-comparison-slide" class="level2">
+<h2 class="anchored" data-anchor-id="persona-comparison-slide">Persona Comparison Slide</h2>
+<p>Use one user message and show how Jarvis adapts across personas.</p>
+<p>User message:</p>
+<blockquote class="blockquote">
+<p>I am overwhelmed. I have three deadlines, and I do not know where to start.</p>
+</blockquote>
+<p>Detected emotion:</p>
+<p><code>fear</code></p>
+<section id="priya-shah---stressed-msba-student" class="level3">
+<h3 class="anchored" data-anchor-id="priya-shah---stressed-msba-student">Priya Shah - Stressed MSBA Student</h3>
+<p>Response:</p>
+<blockquote class="blockquote">
+<p>You are overloaded, not broken. Pick the deadline with the closest consequence, write the first deliverable in one sentence, and work on only that for 15 minutes.</p>
+</blockquote>
+<p>Why it works:</p>
+<p>Direct, expressive, mixed support, anxious attachment. Acknowledge pressure, reduce self-blame, then triage.</p>
+</section>
+<section id="tony-stark---armored-fixer" class="level3">
+<h3 class="anchored" data-anchor-id="tony-stark---armored-fixer">Tony Stark - Armored Fixer</h3>
+<p>Response:</p>
+<blockquote class="blockquote">
+<p>Triage it. Rank the three deadlines by consequence, pick the highest-impact one, and define the next physical action. No emotional autopsy required.</p>
+</blockquote>
+<p>Why it works:</p>
+<p>Direct, suppression, instrumental support, avoidant attachment. Keep autonomy and move quickly to options.</p>
+</section>
+<section id="maya-chen---reassurance-texter" class="level3">
+<h3 class="anchored" data-anchor-id="maya-chen---reassurance-texter">Maya Chen - Reassurance Texter</h3>
+<p>Response:</p>
+<blockquote class="blockquote">
+<p>That sounds like a lot, and it makes sense that your brain is trying to treat all three as emergencies. You do not have to solve all of them tonight. Start by naming the one that is actually due first.</p>
+</blockquote>
+<p>Why it works:</p>
+<p>Indirect, expressive, emotional support, anxious attachment. Validate first, then separate facts from fear.</p>
+</section>
+<section id="default-danny---steady-default" class="level3">
+<h3 class="anchored" data-anchor-id="default-danny---steady-default">Default Danny - Steady Default</h3>
+<p>Response:</p>
+<blockquote class="blockquote">
+<p>Let’s make it smaller. Choose the deadline that matters most today, define the next 15-minute action, and come back to the full list after that.</p>
+</blockquote>
+<p>Why it works:</p>
+<p>Direct, reappraisal, mixed support, secure attachment. Balanced, clear, and practical.</p>
+</section>
+</section>
+<section id="demo-flow-for-presentation" class="level2">
+<h2 class="anchored" data-anchor-id="demo-flow-for-presentation">Demo Flow For Presentation</h2>
+<ol type="1">
+<li>Open the browser UI and show the current default persona.</li>
+<li>Send a stressed text prompt through <code>/api/chat</code>.</li>
+<li>Show <code>detected_emotion</code> in the raw JSON.</li>
+<li>Show that the response uses guidance from <code>corpus/persona_guidance.json</code>.</li>
+<li>Use <code>/api/personas</code> to show the available profiles.</li>
+<li>Explain the future vector RAG layer:</li>
+</ol>
+<pre class="text"><code>uploaded docs -&gt; chunk -&gt; embed -&gt; vector DB -&gt; retrieve top chunks -&gt; LLM prompt</code></pre>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
